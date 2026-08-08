@@ -1,0 +1,10 @@
+{
+  "lane": "structured_content_archetype_clustering",
+  "k_used": 4,
+  "action_counts": {
+    "monitor": 21748,
+    "investigate": 4722,
+    "refresh": 3530
+  },
+  "decay_refresh_insight": "Weighted CTR is directionally lower for staler content in this dataset (Week-4 signal check); observed and directional, not causal."
+}

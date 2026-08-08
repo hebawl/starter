@@ -1,0 +1,49 @@
+{
+  "lane": "structured_content_archetype_clustering",
+  "random_split_best_k": 6,
+  "grouped_split_best_k": 8,
+  "test_metrics": [
+    {
+      "validation": "random_page_split_before",
+      "method": "tier_cross_baseline",
+      "split": "test",
+      "silhouette": -0.237499,
+      "calinski_harabasz": 59.08484,
+      "davies_bouldin": 3.355959,
+      "n_clusters": 55,
+      "metric_rows": 5000
+    },
+    {
+      "validation": "random_page_split_before",
+      "method": "kmeans_k=6",
+      "split": "test",
+      "silhouette": 0.293457,
+      "calinski_harabasz": 1162.820219,
+      "davies_bouldin": 1.098386,
+      "n_clusters": 6,
+      "metric_rows": 5000
+    },
+    {
+      "validation": "grouped_client_split_after",
+      "method": "tier_cross_baseline",
+      "split": "test",
+      "silhouette": -0.249193,
+      "calinski_harabasz": 27.988834,
+      "davies_bouldin": 4.30638,
+      "n_clusters": 41,
+      "metric_rows": 5000
+    },
+    {
+      "validation": "grouped_client_split_after",
+      "method": "kmeans_k=8",
+      "split": "test",
+      "silhouette": 0.422156,
+      "calinski_harabasz": 5361.37115,
+      "davies_bouldin": 1.231548,
+      "n_clusters": 8,
+      "metric_rows": 5000
+    }
+  ],
+  "feature_count": 9,
+  "leakage_audit_passed": true
+}
