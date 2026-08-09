@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Which Pages to Fix First? Content Archetypes for Search Triage</title>
+<style>
+  :root {
+    --ink: #1a1d23;
+    --muted: #5b6472;
+    --accent: #2f6fed;
+    --border: #e4e7ec;
+    --bg: #fbfbfc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.6;
+  }
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 20px 100px;
+  }
+  header.hero {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 56px 20px 0;
+  }
+  h1 {
+    font-size: 2rem;
+    line-height: 1.25;
+    margin: 0 0 12px;
+  }
+  h2 {
+    font-size: 1.35rem;
+    margin-top: 48px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+  h2:first-of-type { border-top: none; }
+  p { margin: 0 0 16px; }
+  .meta {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 28px;
+  }
+  .abstract {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    font-size: 1rem;
+    color: #333;
+  }
+  figure {
+    margin: 24px 0;
+    text-align: center;
+  }
+  figure img {
+    max-width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  figcaption {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-top: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.95rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--muted); font-weight: 600; }
+  code {
+    background: #f0f1f3;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+  a { color: var(--accent); }
+  ul { padding-left: 22px; }
+  .badge {
+    display: inline-block;
+    background: #eef3ff;
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 16px;
+  }
+  .footer-note {
+    color: var(--muted);
+    font-size: 0.9rem;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+    margin-top: 48px;
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <span class="badge">FlyRank ML Internship — Capstone</span>
+  <h1>Which Pages to Fix First? Sorting Content Into Archetypes for Search Triage</h1>
+  <div class="meta">Heba Walid Awad · Structured Content Archetype Clustering lane</div>
+</header>
+
+<main>
+
+  <div class="abstract">
+    <strong>Abstract.</strong> Out of thousands of published pages, which ones deserve a
+    human editor's attention first? I grouped 30,000 pseudonymized FlyRank pages into simple
+    performance archetypes using K-Means clustering, validated on pages from clients the
+    model never saw during fitting. Against a transparent, hand-written tier rule on the
+    same held-out clients, the clustering found noticeably clearer groupings (silhouette
+    0.84 vs. −0.13). I then applied a plain staleness-and-CTR rule on top of the archetypes
+    to produce a ranked, reason-coded queue: about 12% of pages are flagged <code>refresh</code>
+    (stale and underperforming), 16% <code>investigate</code> (underperforming but not stale —
+    likely not a staleness problem), and the rest <code>monitor</code>. This is a
+    decision-support tool for weekly editorial triage, not a prediction of future traffic or
+    a causal claim about what refreshing a page will do.
+  </div>
+
+  <h2>Introduction</h2>
+  <p>
+    FlyRank researches, writes, and publishes content into client websites, then watches
+    search performance and optimizes. A recurring, unglamorous decision sits behind that
+    loop: with limited editor time, which pages get reviewed this week? FlyRank's product
+    already flags pages with hand-written rules — a health score, quick-win tags — but
+    rules run out where signals get numerous and tangled. This project asks whether a
+    simple learned grouping of pages can sharpen that same decision without pretending to
+    know more than the data supports.
+  </p>
+
+  <h2>Data</h2>
+  <p>
+    I used the FlyRank internship starter release, <code>content_refresh_anonymized.csv</code>
+    — 30,000 pseudonymized content items across 32 clients, aggregated over a trailing 90-day
+    window ending at export time. This is a single snapshot, not a time series.
+  </p>
+  <p>Deliberately excluded from every feature, score, or cluster input:</p>
+  <ul>
+    <li><code>trend_direction</code> / <code>trend_pct</code> — these define the growth/decline
+      label; using them as inputs would be circular, not a finding.</li>
+    <li><code>content_id</code> / <code>client_id</code> — pseudonymous identifiers, used only
+      to build a grouped train/test split, never as model inputs.</li>
+    <li>Any FlyRank product flag (health score, priority score) — these encode a decision
+      someone already made, and using them as inputs would just reproduce that decision.</li>
+  </ul>
+  <p>No client names, domains, raw search queries, or credentials appear anywhere in this
+    project's repository or outputs.</p>
+
+  <h2>Methodology</h2>
+  <p>
+    <strong>Method:</strong> K-Means clustering on two features — 90-day impressions and days
+    since last update — kept deliberately small so every grouping is explainable in one
+    sentence. There is no outcome label to predict here; the question is "what shapes exist
+    in this data," not "what will happen next."
+  </p>
+  <p>
+    <strong>Split:</strong> pages from the same client share templates and editorial habits,
+    so a random row split would let the model look better than it generalizes. I held out
+    20% of clients entirely — the model never saw their pages while fitting — and evaluated
+    only on that held-out set.
+  </p>
+  <p>
+    <strong>Baseline:</strong> a transparent, hand-written tier-cross rule (freshness tier ×
+    impression tier), the same "if-statement" logic FlyRank's product already runs in
+    production. No fitted parameters — the bar any learned model has to clear.
+  </p>
+  <p>
+    <strong>Leakage check:</strong> the feature list contains only <code>impressions_90d</code>
+    and <code>days_since_last_update</code> — no label-derived, product-derived, or
+    identifier columns are used anywhere in the clustering step.
+  </p>
+
+  <h2>Results</h2>
+  <p>
+    On the same held-out clients, K-Means produced substantially better-separated groups
+    than the baseline rule:
+  </p>
+  <table>
+    <tr><th>Method</th><th>Groups</th><th>Silhouette (held-out clients)</th></tr>
+    <tr><td>Baseline tier rule</td><td>14</td><td>−0.13</td></tr>
+    <tr><td>K-Means archetypes</td><td>4</td><td>0.84</td></tr>
+  </table>
+  <figure>
+    <img src="assets/model_vs_baseline.png" alt="Bar chart comparing silhouette score of baseline rule versus K-Means archetypes">
+    <figcaption>K-Means found clearer, better-separated groups than the baseline rule on
+      pages from clients the model never trained on.</figcaption>
+  </figure>
+  <p>
+    <em>Worth noting for fairness:</em> the baseline rule produces 14 fine-grained tiers by
+    construction, while K-Means was asked for 4 broader groups — part of the gap is that
+    the baseline is simply more fragmented, not only that it's a worse fit. A K-Means run
+    forced to also produce ~14 clusters would likely close some of this gap. The honest
+    takeaway is directional: a small number of learned groups separates this data at least
+    as cleanly as a much larger set of hand-written tiers, which is a useful property for a
+    human trying to keep a handful of archetypes in their head.
+  </p>
+
+  <h2>Limitations &amp; Honest Framing</h2>
+  <ul>
+    <li><strong>No causal claim.</strong> Archetype membership and the refresh flag are a
+      same-snapshot comparison. Nothing here shows that refreshing a page causes its CTR to
+      improve — no refresh was actually run and measured in this dataset.</li>
+    <li><strong>One snapshot, not a trend.</strong> The 90-day window is a photo, not a video
+      — it says nothing about a page's trajectory before or after it.</li>
+    <li><strong>Modest, not sharp, separation.</strong> A silhouette of 0.84 with only 2
+      simple features indicates real structure but should not be read as proof of "true"
+      content archetypes — it's a useful lens, not a hard boundary.</li>
+    <li><strong>Selection bias is unknown.</strong> Which pages FlyRank historically chose to
+      refresh isn't in this dataset, so "refreshed pages later did better" cannot be tested
+      here.</li>
+    <li><strong>The model never reads the page.</strong> A flagged page could be a genuine
+      problem, or a branded/navigational query where low CTR is normal — a human has to
+      check before acting.</li>
+  </ul>
+
+  <h2>Ranked Recommendations</h2>
+  <p>
+    On top of the archetypes, a simple, transparent rule assigns each page one of three
+    actions with a plain reason code:
+  </p>
+  <ul>
+    <li><code>refresh</code> — stale (31+ days), still getting real traffic (500+
+      impressions/90d), and underperforming (CTR below the median of visible pages).</li>
+    <li><code>investigate</code> — visible and underperforming, but not stale — likely not a
+      staleness problem, needs a different kind of look before any content changes.</li>
+    <li><code>monitor</code> — everything else: too little traffic to justify review time
+      yet, or already performing fine.</li>
+  </ul>
+  <figure>
+    <img src="assets/action_counts.png" alt="Horizontal bar chart of page counts per recommended action">
+    <figcaption>Most pages need no action yet; roughly one in eight is flagged for
+      refresh.</figcaption>
+  </figure>
+  <p>
+    <strong>How an editor would use this tomorrow:</strong> open the <code>refresh</code>
+    tier first, sorted by traffic (biggest upside first). Before editing anything, confirm
+    the query isn't branded/navigational, check for a recent ranking shake-up, and rule out
+    a tracking gap for <code>investigate</code> pages. This queue is a starting point for a
+    person's review, never an automated action.
+  </p>
+
+  <h2>Reproducibility</h2>
+  <p>
+    Full code: <a href="https://github.com/hebawl/starter">github.com/hebawl/starter</a>.
+    The capstone notebook is
+    <a href="https://github.com/hebawl/starter/blob/main/work/notebooks/capstone.ipynb">work/notebooks/capstone.ipynb</a>
+    — every number and chart on this page comes from that notebook, executed top to bottom
+    with a fixed random seed (42). The weekly notebooks it builds on
+    (<a href="https://github.com/hebawl/starter/tree/main/work/notebooks">work/notebooks/</a>)
+    show the full path from first EDA through validation and the action playbook.
+  </p>
+
+  <h2>Acknowledgments &amp; Data Credit</h2>
+  <p>
+    Built on the FlyRank ML Internship dataset —
+    <a href="https://flyrank.ai" target="_blank" rel="noopener">flyrank.ai</a>.
+  </p>
+
+  <div class="footer-note">
+    Claim language on this page follows the observed / measured / directional /
+    decision-support standard — no claim here goes beyond what the validation design
+    supports.
+  </div>
+
+</main>
+</body>
+</html>
