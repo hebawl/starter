@@ -5,9 +5,22 @@
 - **Repo:** https://github.com/hebawl/starter
 - **Date:** 2026-08-08
 
+## Abstract
+
+This public-safe FlyRank case study asks how an editor can decide which published pages to
+review first when thousands compete for limited weekly triage time. On 30,000 pseudonymized
+content pages, I used K-Means to describe traffic-and-freshness patterns and compared the
+result with a transparent hand-written tier rule on entirely held-out clients. The learned
+groups were more clearly separated by silhouette score, though they were driven mainly by
+traffic magnitude. A reason-coded queue turns that descriptive result into a human-review
+starting point; it does not predict future traffic or prove that refreshing a page causes an
+improvement.
+
 ## 1. Problem framing
 
-The unit of analysis is one content page (pseudonymized). The output is a page-level
+This is a public-safe case study of FlyRank's weekly editorial-triage problem: deciding which
+already-published pages deserve a human review first when editor time is limited. The unit of
+analysis is one content page (pseudonymized). The output is a page-level
 archetype (K-Means cluster) plus a ranked action with a reason code. The action a human
 takes is opening the top of the queue during weekly editorial triage and deciding whether
 to refresh, investigate, or leave a page alone. Getting this wrong costs editor time on the
